@@ -21,24 +21,26 @@ export default function HostEventPage() {
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const formData = new FormData();
-    Object.entries(form).forEach(([k, v]) => formData.append(k, v));
-    formData.append("artistImage", artistImage);
-    formData.append("eventImage", eventImage);
+  const formData = new FormData();
+  for (const key in form) {
+    formData.append(key, form[key]);
+  }
+  formData.append("artistImage", artistImage);
+  formData.append("eventImage", eventImage);
 
-    try {
-      const res = await axios.post("/api/events", formData);
-      const newEvent = res.data;
+  try {
+    await axios.post("/api/events", formData);
+    router.push("/dashboard?created=1");
+  } catch (err) {
+    console.error("Event creation failed", err);
+    alert("Something went wrong!");
+  }
+};
 
-      router.push("/dashboard?created=1");
-    } catch (err) {
-      alert("Failed to create event");
-    }
-  };
-
+   
   return (
     <div className="h-screen bg-[#0e0f1a] text-white flex items-center justify-center px-4">
       <form

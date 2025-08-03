@@ -1,47 +1,52 @@
-import { NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/mongodb";
-import cloudinary from "@/lib/cloudinary";
+import { connectDB } from "@/lib/db";
 import Event from "@/models/Event";
-
-export async function POST(req) {
-  const form = await req.formData();
-  await connectToDatabase();
-
-  const uploadToCloudinary = async (file) => {
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const base64 = `data:${file.type};base64,${buffer.toString("base64")}`;
-    const uploaded = await cloudinary.uploader.upload(base64, {
-      folder: "eventnexa",
-    });
-    return uploaded.secure_url;
-  };
-
-  try {
-    const artistImage = await uploadToCloudinary(form.get("artistImage"));
-    const eventImage = await uploadToCloudinary(form.get("eventImage"));
-
-    const event = await Event.create({
-      title: form.get("title"),
-      artist: form.get("artist"),
-      category: form.get("category"),
-      description: form.get("description"),
-      location: form.get("location"),
-      date: form.get("date"),
-      artistImage,
-      eventImage,
-    });
-
-    // Emit to socket clients
-    global.io?.emit("new_event", event);
-
-    return NextResponse.json(event, { status: 201 });
-  } catch (err) {
-    return NextResponse.json({ error: "Failed to create event" }, { status: 500 });
-  }
-}
+import cloudinary from "@/lib/cloudinary";
 
 export async function GET() {
-  await connectToDatabase();
-  const events = await Event.find().sort({ date: -1 });
-  return NextResponse.json(events);
+  await connectDB();
+  const events = await Event.find().sort({ date: 1 });
+  return Response.json(events);
+}
+
+export async function POST(req) {
+  try {
+    await connectDB();
+
+    const formData = await req.formData();
+    const fields = ["title", "artist", "category", "description", "location", "date"];
+    const data = {};
+
+    for (const field of fields) {
+      data[field] = formData.get(field);
+    }
+
+    // Upload artistImage
+    const artistImageFile = formData.get("artistImage");
+    const artistBuffer = await artistImageFile.arrayBuffer();
+    const artistBase64 = Buffer.from(artistBuffer).toString("base64");
+
+    const artistRes = await cloudinary.uploader.upload(
+      `data:${artistImageFile.type};base64,${artistBase64}`,
+      { folder: "eventnexa/artists" }
+    );
+
+    // Upload eventImage
+    const eventImageFile = formData.get("eventImage");
+    const eventBuffer = await eventImageFile.arrayBuffer();
+    const eventBase64 = Buffer.from(eventBuffer).toString("base64");
+
+    const eventRes = await cloudinary.uploader.upload(
+      `data:${eventImageFile.type};base64,${eventBase64}`,
+      { folder: "eventnexa/events" }
+    );
+
+    data.artistImage = artistRes.secure_url;
+    data.eventImage = eventRes.secure_url;
+
+    const newEvent = await Event.create(data);
+    return Response.json(newEvent);
+  } catch (err) {
+    console.error("Event creation failed:", err);
+    return new Response("Event creation failed", { status: 500 });
+  }
 }
