@@ -1,9 +1,10 @@
 import { connectDB } from "@/lib/db";
-import Event from "@/models/Event";
 import cloudinary from "@/lib/cloudinary";
 
 export async function GET() {
   await connectDB();
+  const Event = (await import("@/models/Event")).default;
+
   const events = await Event.find().sort({ date: 1 });
   return Response.json(events);
 }
@@ -11,6 +12,7 @@ export async function GET() {
 export async function POST(req) {
   try {
     await connectDB();
+    const Event = (await import("@/models/Event")).default;
 
     const formData = await req.formData();
     const fields = ["title", "artist", "category", "description", "location", "date"];
@@ -20,7 +22,7 @@ export async function POST(req) {
       data[field] = formData.get(field);
     }
 
-    // Upload artistImage
+    // Upload artist image
     const artistImageFile = formData.get("artistImage");
     const artistBuffer = await artistImageFile.arrayBuffer();
     const artistBase64 = Buffer.from(artistBuffer).toString("base64");
@@ -30,7 +32,7 @@ export async function POST(req) {
       { folder: "eventnexa/artists" }
     );
 
-    // Upload eventImage
+    // Upload event image
     const eventImageFile = formData.get("eventImage");
     const eventBuffer = await eventImageFile.arrayBuffer();
     const eventBase64 = Buffer.from(eventBuffer).toString("base64");
