@@ -1,8 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 export default function Highlights() {
+  const router = useRouter();
+
   return (
     <section className="py-24 bg-[#0f1115] text-center text-white px-4">
       <motion.h2
@@ -35,7 +38,10 @@ export default function Highlights() {
         transition={{ duration: 0.4, delay: 0.3 }}
         viewport={{ once: true }}
       >
-        <button className="px-7 py-3 rounded-full bg-[#5ac8fa] text-black font-semibold hover:shadow-[0_0_20px_#5ac8fa] transition duration-300">
+        <button
+          onClick={() => router.push("/login")}
+          className="px-7 py-3 rounded-full bg-[#5ac8fa] text-black font-semibold hover:shadow-[0_0_20px_#5ac8fa] transition duration-300"
+        >
           Start Hosting
         </button>
       </motion.div>
