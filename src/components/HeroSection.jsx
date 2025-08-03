@@ -1,7 +1,11 @@
 "use client";
+
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 export default function HeroSection() {
+  const router = useRouter();
+
   return (
     <section
       className="relative h-screen w-full flex items-center justify-center bg-black text-white"
@@ -36,10 +40,11 @@ export default function HeroSection() {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
+          onClick={() => router.push("/login")}
           className="px-7 py-3 text-lg bg-blue-600 hover:bg-blue-500 rounded-full text-white shadow-lg transition"
         >
-      Host Event Now !     
-       </motion.button>
+          Host Event Now !
+        </motion.button>
       </motion.div>
     </section>
   );
